@@ -1,12 +1,12 @@
-# ========== Runtime ==========
-FROM debian:bookworm-slim
+FROM golang:1.25-bookworm AS builder
 
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY go.mod ./
 RUN go mod download
 COPY cmd/server ./cmd/server
 RUN go build -o /app/its-certcenter ./cmd/server
 
+FROM debian:bookworm-slim
 # 基本工具
 RUN apt-get update && \
 # -y 自動回答所有互動式問題為 yes，也就是「不用再人工輸入 y 來確認安裝」。

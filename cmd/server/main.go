@@ -36,7 +36,7 @@ func loadRegisterInfo() (*RegisterInfo, error) {
 func handleRegister(w http.ResponseWriter, r *http.Request) {
 	reg, err := loadRegisterInfo()
 	if err != nil {
-		http.Error(w, "register info not found", 500)
+		http.Error(w, fmt.Sprintf("register info not found error: %v", err), 500)
 		return
 	}
 	json.NewEncoder(w).Encode(reg)
@@ -46,15 +46,28 @@ func issueCert(domain string) error {
 	domainDir := filepath.Join(baseDir, domain)
 	os.MkdirAll(domainDir, 0700)
 
+	reg, err := loadRegisterInfo()
+	if err != nil {
+		return fmt.Errorf("no register info: %v", err)
+	}
+
 	cmd := exec.Command(
 		"/root/.acme.sh/acme.sh",
 		"--issue",
 		"--dns",
 		"dns_acmedns",
 		"-d", domain,
-		"--key-file", filepath.Join(domainDir, "itsower.com.tw.key"),
+		"--key-file", filepath.Join(domainDir, "its-certcenter.key"),
 		"--fullchain-file", filepath.Join(domainDir, "fullchain.cer"),
+		"--cert-file", filepath.Join(domainDir, "its-certcenter.cer"),
 		"--ca-file", filepath.Join(domainDir, "ca.cer"),
+	)
+
+	cmd.Env = append(os.Environ(),
+		"ACMEDNS_BASE_URL=https://auth.acme-dns.io",
+		"ACMEDNS_USERNAME="+reg.Username,
+		"ACMEDNS_PASSWORD="+reg.Password,
+		"ACMEDNS_SUBDOMAIN="+reg.Subdomain,
 	)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	return cmd.Run()

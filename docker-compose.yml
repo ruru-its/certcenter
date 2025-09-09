@@ -1,0 +1,12 @@
+services:
+  its-certcenter:
+    image: its-certcenter:test
+    container_name: its-certcenter
+    ports:
+    - "9250:9250"
+    environment:
+    - ACME_ACCOUNT=itsower567@gmail.com
+    - ACME_DNS_API=https://auth.acme-dns.io/register
+    # 務必成功執行之後再掛出憑證儲存目錄
+    #volumes:
+    #- C:/Users/AmandaChou/Downloads/its-certcenter/storage:/its-certcenter
