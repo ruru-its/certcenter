@@ -13,8 +13,18 @@ go build -o its-certcenter ./cmd/server
 ``` shell
  docker build -t its-certcenter:test .
 ```
+
 查詢當前 fqdn
-curl $url/register
+curl http://localhost:9250/register
 
 發行憑證
 curl -X POST "http://localhost:9250/cert?domain=*.itsower.com.tw"
+
+下載憑證
+curl -OJ "http://localhost:9250/cert?domain=*.itsower.com.tw"
+
+檢查到期日
+curl "http://localhost:9250/expire?domain=*.itsower.com.tw"
+
+檢查健康狀態
+curl "http://localhost:9250/health?domain=*.itsower.com.tw"

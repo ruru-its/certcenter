@@ -17,6 +17,8 @@ curl \
 dnsutils \
 # 處理 JSON，方便解析/格式化 API 回應
 jq \
+# 處理 Cer 檔案 zip 下載
+zip \
 # SSL/TLS 工具，用來檢查/轉換憑證
 openssl \
 # 排程工具，自動定期續期憑證

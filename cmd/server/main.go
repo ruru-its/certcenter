@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -45,6 +46,12 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 func issueCert(domain string) error {
 	domainDir := filepath.Join(baseDir, domain)
 	os.MkdirAll(domainDir, 0700)
+
+	// 如果已經有 fullchain.cer，就不要重複 issue
+	certFile := filepath.Join(domainDir, "fullchain.cer")
+	if _, err := os.Stat(certFile); err == nil {
+		return fmt.Errorf("certificate already exists for %s", domain)
+	}
 
 	reg, err := loadRegisterInfo()
 	if err != nil {
@@ -92,22 +99,39 @@ func handleGetCert(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "domain required", 400)
 		return
 	}
-	files := []string{"fullchain.cer", "itsower.com.tw.key", "ca.cer"}
+
+	files := []string{"fullchain.cer", "its-certcenter.key", "ca.cer"}
 	domainDir := filepath.Join(baseDir, domain)
 
-	zipName := filepath.Join(os.TempDir(), fmt.Sprintf("%s-cert.zip", strings.ReplaceAll(domain, "*", "star")))
-	zipCmd := exec.Command("zip", "-j", zipName,
-		filepath.Join(domainDir, files[0]),
-		filepath.Join(domainDir, files[1]),
-		filepath.Join(domainDir, files[2]),
-	)
+	zipName := filepath.Join(os.TempDir(), "live.zip")
+	args := []string{"-j", zipName}
+
+	validFiles := 0
+	for _, f := range files {
+		path := filepath.Join(domainDir, f)
+		if _, err := os.Stat(path); err == nil {
+			log.Printf("[handleGetCert] found file for domain=%s: %s", domain, f)
+			args = append(args, path)
+			validFiles++
+		} else {
+			log.Printf("[handleGetCert] missing file for domain=%s: %s (err=%v)",
+				domain, f, err)
+		}
+	}
+
+	if validFiles == 0 {
+		http.Error(w, fmt.Sprintf("no cert files found for domain %s", domain), 404)
+		return
+	}
+
+	zipCmd := exec.Command("zip", args...)
 	if err := zipCmd.Run(); err != nil {
 		http.Error(w, "zip failed", 500)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", "attachment; filename=cert.zip")
+	w.Header().Set("Content-Disposition", "attachment; filename=live.zip")
 	http.ServeFile(w, r, zipName)
 }
 
@@ -133,6 +157,49 @@ func handleExpire(w http.ResponseWriter, r *http.Request) {
 	resp := map[string]string{
 		"domain":   domain,
 		"expireAt": t.UTC().Format(time.RFC3339),
+	}
+	json.NewEncoder(w).Encode(resp)
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
+	if domain == "" {
+		http.Error(w, "domain required", 400)
+		return
+	}
+
+	certFile := filepath.Join(baseDir, domain, "fullchain.cer")
+	cmd := exec.Command("openssl", "x509", "-enddate", "-noout", "-in", certFile)
+	out, err := cmd.Output()
+	if err != nil {
+		http.Error(w, "cannot read cert", 500)
+		return
+	}
+	parts := strings.Split(strings.TrimSpace(string(out)), "=")
+	if len(parts) != 2 {
+		http.Error(w, "bad cert format", 500)
+		return
+	}
+
+	// 解析憑證到期日
+	t, _ := time.Parse("Jan 2 15:04:05 2006 MST", parts[1])
+	now := time.Now().UTC()
+	daysRemaining := int(t.Sub(now).Hours() / 24)
+
+	status := "OK"
+	if daysRemaining <= 0 {
+		status = "ERROR"
+		log.Printf("[handleHealth] ERROR: domain=%s expired at %s", domain, t.UTC().Format(time.RFC3339))
+	} else if daysRemaining <= 30 {
+		status = "WARN"
+		log.Printf("[handleHealth] WARN: domain=%s will expire in %d days (%s)", domain, daysRemaining, t.UTC().Format(time.RFC3339))
+	}
+
+	resp := map[string]interface{}{
+		"domain":        domain,
+		"expireAt":      t.UTC().Format(time.RFC3339),
+		"status":        status,
+		"daysRemaining": daysRemaining,
 	}
 	json.NewEncoder(w).Encode(resp)
 }
@@ -164,6 +231,7 @@ func main() {
 	})
 	http.HandleFunc("/expire", handleExpire)
 	http.HandleFunc("/renew", handleRenew)
+	http.HandleFunc("/health", handleHealth)
 
 	fmt.Println("[its-certcenter] Server started at :9250")
 	http.ListenAndServe(":9250", nil)
