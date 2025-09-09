@@ -1,0 +1,30 @@
+# Go build output
+its-certcenter
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Coverage files
+*.out
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# Docker
+data/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Acme / cert runtime
+/its-certcenter/*
+!/its-certcenter/.gitkeep
