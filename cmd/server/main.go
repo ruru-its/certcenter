@@ -34,13 +34,45 @@ func loadRegisterInfo() (*RegisterInfo, error) {
 	return &reg, err
 }
 
-func handleRegister(w http.ResponseWriter, r *http.Request) {
+// 讀取註冊資訊自註冊檔案
+func handleRegisterReadFile(w http.ResponseWriter, r *http.Request) {
 	reg, err := loadRegisterInfo()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("register info not found error: %v", err), 500)
 		return
 	}
-	json.NewEncoder(w).Encode(reg)
+	// 組合回傳 JSON，額外加上 tips
+	resp := map[string]interface{}{
+		"username":   reg.Username,
+		"password":   reg.Password,
+		"subdomain":  reg.Subdomain,
+		"fulldomain": reg.FullDomain,
+		"tips":       fmt.Sprintf("Azure DNS zones Recordsets add _acme-challenge type CNAME Alias %s", reg.FullDomain),
+	}
+
+	json.NewEncoder(w).Encode(resp)
+}
+
+// 讀取註冊資訊自環境變數
+func handleRegisterReadEnv(w http.ResponseWriter, r *http.Request) {
+	username := os.Getenv("USERNAME")
+	password := os.Getenv("PASSWORD")
+	subdomain := os.Getenv("SUBDOMAIN")
+	fulldomain := os.Getenv("FQDN")
+
+	if username == "" || password == "" || subdomain == "" || fulldomain == "" {
+		http.Error(w, "required environment variables not found", 500)
+		return
+	}
+	// 組合回傳 JSON，額外加上 tips
+	resp := map[string]interface{}{
+		"username":   username,
+		"password":   password,
+		"subdomain":  subdomain,
+		"fulldomain": fulldomain,
+		"tips":       fmt.Sprintf("Azure DNS zones Recordsets: add a CNAME record '_acme-challenge.<your-domain>' → %s", fulldomain),
+	}
+	json.NewEncoder(w).Encode(resp)
 }
 
 func issueCert(domain string) error {
@@ -221,7 +253,8 @@ func handleRenew(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/register", handleRegister)
+	//http.HandleFunc("/register", handleRegisterReadFile) //來自註冊檔案
+	http.HandleFunc("/register", handleRegisterReadEnv) //來自環境變數
 	http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			handleIssue(w, r)

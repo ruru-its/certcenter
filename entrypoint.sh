@@ -13,6 +13,7 @@ $ACME_HOME/acme.sh --set-default-ca --server letsencrypt
 $ACME_HOME/acme.sh --register-account -m "$ACME_ACCOUNT" || true
 
 # 初始化 acme 帳號 & 註冊 acme-dns
+# 使憑證中心所有憑證申請都統一使用同一個帳號
 if [ ! -f "$REG_FILE" ]; then
   echo "[its-certcenter] Registering with acme-dns..."
   REG_JSON=$(curl -s -X POST "$ACME_DNS_API")
@@ -24,10 +25,11 @@ if [ ! -f "$REG_FILE" ]; then
   SUBDOMAIN=$(jq -r .subdomain "$REG_FILE")
   FQDN=$(jq -r .fulldomain "$REG_FILE")
 
-  echo "USERNAME=$USERNAME" >> /etc/environment
-  echo "PASSWORD=$PASSWORD" >> /etc/environment
-  echo "SUBDOMAIN=$SUBDOMAIN" >> /etc/environment
-  echo "FQDN=$FQDN" >> /etc/environment
+  export USERNAME="$USERNAME"
+  export PASSWORD="$PASSWORD"
+  export SUBDOMAIN="$SUBDOMAIN"
+  export FQDN="$FQDN"
+  
 else
   echo "[its-certcenter] Using existing acme-dns registration"
 fi
