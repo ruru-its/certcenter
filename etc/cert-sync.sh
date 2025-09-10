@@ -14,7 +14,9 @@ echo "[INFO] Checking cert status for domain=$DOMAIN"
 
 if [ "$status" = "OK" ] || [ "$status" = "WARN" ]; then
     echo "[INFO] Cert status=$status, downloading..."
-    curl -s -OJ "$CERT_API"
+    rm -f live.zip # 移除舊檔
+    mkdir -p "$TARGET_DIR" # 確保目錄存在
+    curl -OJ "$CERT_API"
     unzip -o live.zip -d "$TARGET_DIR"
 elif [ "$status" = "ERROR" ]; then
     echo "[ERROR] Certificate expired, manual intervention required!"
