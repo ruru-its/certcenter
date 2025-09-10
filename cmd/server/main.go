@@ -34,8 +34,8 @@ func loadRegisterInfo() (*RegisterInfo, error) {
 	return &reg, err
 }
 
-// 讀取註冊資訊自註冊檔案
-func handleRegisterReadFile(w http.ResponseWriter, r *http.Request) {
+func handleRegister(w http.ResponseWriter, r *http.Request) {
+	// 讀取註冊資訊自註冊檔案
 	reg, err := loadRegisterInfo()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("register info not found error: %v", err), 500)
@@ -47,31 +47,8 @@ func handleRegisterReadFile(w http.ResponseWriter, r *http.Request) {
 		"password":   reg.Password,
 		"subdomain":  reg.Subdomain,
 		"fulldomain": reg.FullDomain,
-		"tips":       fmt.Sprintf("Azure DNS zones Recordsets add _acme-challenge type CNAME Alias %s", reg.FullDomain),
 	}
 
-	json.NewEncoder(w).Encode(resp)
-}
-
-// 讀取註冊資訊自環境變數
-func handleRegisterReadEnv(w http.ResponseWriter, r *http.Request) {
-	username := os.Getenv("USERNAME")
-	password := os.Getenv("PASSWORD")
-	subdomain := os.Getenv("SUBDOMAIN")
-	fulldomain := os.Getenv("FQDN")
-
-	if username == "" || password == "" || subdomain == "" || fulldomain == "" {
-		http.Error(w, "required environment variables not found", 500)
-		return
-	}
-	// 組合回傳 JSON，額外加上 tips
-	resp := map[string]interface{}{
-		"username":   username,
-		"password":   password,
-		"subdomain":  subdomain,
-		"fulldomain": fulldomain,
-		"tips":       fmt.Sprintf("Azure DNS zones Recordsets: add a CNAME record '_acme-challenge.<your-domain>' → %s", fulldomain),
-	}
 	json.NewEncoder(w).Encode(resp)
 }
 
@@ -252,9 +229,28 @@ func handleRenew(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"status":"renewed","domain":"%s"}`, domain)
 }
 
+// 讀取註冊資訊自環境變數
+func handleTips(w http.ResponseWriter, r *http.Request) {
+	fulldomain := os.Getenv("FQDN")
+
+	if fulldomain == "" {
+		http.Error(w, "required environment variables not found", 500)
+		return
+	}
+	// 組合回傳 JSON，額外加上 tips
+	resp := map[string]interface{}{
+		"AzureDNStips":     fmt.Sprintf("Azure DNS zones Recordsets: add a CNAME record '_acme-challenge.<your-domain>' Alias %s", fulldomain),
+		"AcmeRegisterInfo": "Get ACME registration info via GET /register",
+		"CertPathTips":     "Certificates will be stored under /its-certcenter/<domain>/ (e.g. /its-certcenter/*.itsower.com.tw/)",
+		"RenewCert":        "You can trigger manual renew via POST /renew?domain=<your-domain>",
+		"HealthCheck":      "Check certificate health via GET /health?domain=<your-domain> (status: OK/WARN/ERROR)",
+	}
+	json.NewEncoder(w).Encode(resp)
+}
+
 func main() {
-	//http.HandleFunc("/register", handleRegisterReadFile) //來自註冊檔案
-	http.HandleFunc("/register", handleRegisterReadEnv) //來自環境變數
+	http.HandleFunc("/register", handleRegister)
+	http.HandleFunc("/tips", handleTips)
 	http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			handleIssue(w, r)
