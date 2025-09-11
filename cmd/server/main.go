@@ -234,23 +234,35 @@ func handleTips(w http.ResponseWriter, r *http.Request) {
 	fulldomain := os.Getenv("FQDN")
 
 	if fulldomain == "" {
-		http.Error(w, "required environment variables not found", 500)
+		http.Error(w, "required environment variables FQDN not found", 500)
 		return
 	}
-	// 組合回傳 JSON，額外加上 tips
-	resp := map[string]interface{}{
-		"AzureDNStips":     fmt.Sprintf("Azure DNS zones Recordsets: add a CNAME record '_acme-challenge.<your-domain>' Alias %s", fulldomain),
-		"AcmeRegisterInfo": "Get ACME registration info via GET /register",
-		"CertPathTips":     "Certificates will be stored under /its-certcenter/<domain>/ (e.g. /its-certcenter/*.itsower.com.tw/)",
-		"RenewCert":        "You can trigger manual renew via POST /renew?domain=<your-domain>",
-		"HealthCheck":      "Check certificate health via GET /health?domain=<your-domain> (status: OK/WARN/ERROR)",
+
+	host := r.Host
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
 	}
+	baseURL := fmt.Sprintf("%s://%s", scheme, host)
+
+	resp := map[string]interface{}{
+		"0.FQDN":     fmt.Sprintf("Azure DNS zones Recordsets: add a CNAME record '_acme-challenge.<your-domain>' Alias %s", fulldomain),
+		"1.帳號檢查":     fmt.Sprintf("curl \"%s/register\"", baseURL),
+		"2.憑證發行":     fmt.Sprintf("curl -X POST \"%s/cert?domain=*.itsower.com.tw\"", baseURL),
+		"3.憑證下載":     fmt.Sprintf("curl -OJ \"%s/cert?domain=*.itsower.com.tw\"", baseURL),
+		"4.憑證狀態":     fmt.Sprintf("curl \"%s/health?domain=*.itsower.com.tw\"，用於判斷是否可以下載憑證 (status: OK >30天 / WARN ≤30天 / ERROR 已過期)", baseURL),
+		"5.檢查到期":     fmt.Sprintf("curl \"%s/expire?domain=*.itsower.com.tw\"", baseURL),
+		"6.憑證更新特定憑證": fmt.Sprintf("curl -X POST \"%s/renew?domain=*.itsower.com.tw\"，憑證中心 --force 更新憑證，需搭配 3.重新下載憑證", baseURL),
+		"7.憑證更新所有憑證": fmt.Sprintf("curl -X POST \"%s/renew\"，憑證中心 --force 更新所有憑證，需搭配 3.重新下載憑證", baseURL),
+	}
+
 	json.NewEncoder(w).Encode(resp)
 }
 
 func main() {
-	http.HandleFunc("/register", handleRegister)
 	http.HandleFunc("/tips", handleTips)
+	http.HandleFunc("/", handleTips)
+	http.HandleFunc("/register", handleRegister)
 	http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			handleIssue(w, r)

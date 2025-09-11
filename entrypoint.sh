@@ -29,9 +29,22 @@ if [ ! -f "$REG_FILE" ]; then
   export PASSWORD="$PASSWORD"
   export SUBDOMAIN="$SUBDOMAIN"
   export FQDN="$FQDN"
-  
+
+  # 寫到 env 檔
+  cat > "$BASE_DIR/register.env" <<EOF
+USERNAME=$USERNAME
+PASSWORD=$PASSWORD
+SUBDOMAIN=$SUBDOMAIN
+FQDN=$FQDN
+EOF
+
 else
   echo "[its-certcenter] Using existing acme-dns registration"
+  if [ -f "$BASE_DIR/register.env" ]; then
+    set -a
+    source "$BASE_DIR/register.env"
+    set +a
+  fi
 fi
 
 exec its-certcenter
