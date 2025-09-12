@@ -2,7 +2,7 @@
 set -e
 
 ACME_HOME="/root/.acme.sh"
-BASE_DIR="/its-certcenter"
+BASE_DIR="/certcenter"
 REG_FILE="$BASE_DIR/register.json"
 
 # 確保目錄存在
@@ -15,7 +15,7 @@ $ACME_HOME/acme.sh --register-account -m "$ACME_ACCOUNT" || true
 # 初始化 acme 帳號 & 註冊 acme-dns
 # 使憑證中心所有憑證申請都統一使用同一個帳號
 if [ ! -f "$REG_FILE" ]; then
-  echo "[its-certcenter] Registering with acme-dns..."
+  echo "[certcenter] Registering with acme-dns..."
   REG_JSON=$(curl -s -X POST "$ACME_DNS_API")
   echo "$REG_JSON" > "$REG_FILE"
   export REG_JSON="$REG_JSON"
@@ -39,7 +39,7 @@ FQDN=$FQDN
 EOF
 
 else
-  echo "[its-certcenter] Using existing acme-dns registration"
+  echo "[certcenter] Using existing acme-dns registration"
   if [ -f "$BASE_DIR/register.env" ]; then
     set -a
     source "$BASE_DIR/register.env"
@@ -47,4 +47,4 @@ else
   fi
 fi
 
-exec its-certcenter
+exec certcenter

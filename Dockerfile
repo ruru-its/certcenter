@@ -4,7 +4,7 @@ WORKDIR /app
 COPY go.mod ./
 RUN go mod download
 COPY cmd/server ./cmd/server
-RUN go build -o /app/its-certcenter ./cmd/server
+RUN go build -o /app/certcenter ./cmd/server
 
 FROM debian:bookworm-slim
 # 基本工具
@@ -32,7 +32,7 @@ rm -rf /var/lib/apt/lists/*
 RUN curl https://get.acme.sh | sh
 
 WORKDIR /app
-COPY --from=builder /app/its-certcenter /usr/local/bin/its-certcenter
+COPY --from=builder /app/certcenter /usr/local/bin/certcenter
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

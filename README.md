@@ -1,11 +1,11 @@
 ### project build
 ``` shell
-# 專案目錄（its-certcenter/）初始化
-go mod init its-certcenter
+# 專案目錄（certcenter/）初始化
+go mod init certcenter
 # go 執行
 go run ./cmd/server
 # go 建置
-go build -o its-certcenter ./cmd/server
+go build -o certcenter ./cmd/server
 ```
 
 ### docker build

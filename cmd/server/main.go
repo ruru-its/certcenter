@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	baseDir    = "/its-certcenter"
-	registerFN = "/its-certcenter/register.json"
+	baseDir    = "/certcenter"
+	registerFN = "/certcenter/register.json"
 )
 
 type RegisterInfo struct {
@@ -73,9 +73,9 @@ func issueCert(domain string) error {
 		"--dns",
 		"dns_acmedns",
 		"-d", domain,
-		"--key-file", filepath.Join(domainDir, "its-certcenter.key"),
+		"--key-file", filepath.Join(domainDir, "certcenter.key"),
 		"--fullchain-file", filepath.Join(domainDir, "fullchain.cer"),
-		"--cert-file", filepath.Join(domainDir, "its-certcenter.cer"),
+		"--cert-file", filepath.Join(domainDir, "certcenter.cer"),
 		"--ca-file", filepath.Join(domainDir, "ca.cer"),
 	)
 
@@ -109,7 +109,7 @@ func handleGetCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{"fullchain.cer", "its-certcenter.key", "ca.cer"}
+	files := []string{"fullchain.cer", "certcenter.key", "ca.cer"}
 	domainDir := filepath.Join(baseDir, domain)
 
 	zipName := filepath.Join(os.TempDir(), "live.zip")
@@ -274,6 +274,6 @@ func main() {
 	http.HandleFunc("/renew", handleRenew)
 	http.HandleFunc("/health", handleHealth)
 
-	fmt.Println("[its-certcenter] Server started at :9250")
+	fmt.Println("[certcenter] Server started at :9250")
 	http.ListenAndServe(":9250", nil)
 }

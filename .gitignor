@@ -1,5 +1,5 @@
 # Go build output
-its-certcenter
+certcenter
 *.exe
 *.exe~
 *.dll
@@ -26,5 +26,5 @@ data/
 Thumbs.db
 
 # Acme / cert runtime
-/its-certcenter/*
-!/its-certcenter/.gitkeep
+/certcenter/*
+!/certcenter/.gitkeep

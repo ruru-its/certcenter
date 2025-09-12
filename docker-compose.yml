@@ -8,5 +8,5 @@ services:
     - ACME_ACCOUNT=itsower567@gmail.com
     - ACME_DNS_API=https://auth.acme-dns.io/register
     # 務必成功執行之後再掛出憑證儲存目錄
-    volumes:
-    - C:/Users/AmandaChou/Downloads/its-certcenter/itsower.com.tw:/its-certcenter/*.itsower.com.tw
+    # volumes:
+    # - C:/Users/AmandaChou/Downloads/its-certcenter/itsower.com.tw:/its-certcenter/*.itsower.com.tw
