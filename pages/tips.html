@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>憑證服務操作說明</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; background: #f7f9fb; }
+    h1 { color: #333; }
+    table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+    th, td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+    th { background: #f0f0f0; text-align: left; }
+    tr:hover { background: #f9f9f9; }
+    code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>憑證服務操作說明</h1>
+  <table>
+    <tr><th>步驟</th><th>指令</th></tr>
+    <tr>
+      <td>0. FQDN</td>
+      <td><code>Azure DNS zones Recordsets: add a CNAME record '_acme-challenge.&lt;your-domain&gt;' Alias {{.FQDN}}</code></td>
+    </tr>
+    <tr>
+      <td>1. 帳號檢查</td>
+      <td><code>curl "{{.BaseURL}}/register?account={{.ACME_ACCOUNT}}"</code></td>
+    </tr>
+    <tr>
+      <td>2. 憑證發行</td>
+      <td><code>curl -X POST "{{.BaseURL}}/cert?domain=*.itsower.com.tw"</code></td>
+    </tr>
+    <tr>
+      <td>3. 憑證下載</td>
+      <td><code>curl -OJ "{{.BaseURL}}/cert?domain=*.itsower.com.tw"</code></td>
+    </tr>
+    <tr>
+      <td>4. 憑證狀態</td>
+      <td><code>curl "{{.BaseURL}}/health?domain=*.itsower.com.tw"</code><br>
+          用於判斷是否可以下載憑證 (status: OK &gt;30天 / WARN ≤30天 / ERROR 已過期)</td>
+    </tr>
+    <tr>
+      <td>5. 檢查到期</td>
+      <td><code>curl "{{.BaseURL}}/expire?domain=*.itsower.com.tw"</code></td>
+    </tr>
+    <tr>
+      <td>6. 憑證更新特定憑證</td>
+      <td><code>curl -X POST "{{.BaseURL}}/renew?domain=*.itsower.com.tw"</code><br>
+          憑證中心 --force 更新憑證，需搭配 3. 重新下載憑證</td>
+    </tr>
+    <tr>
+      <td>7. 憑證更新所有憑證</td>
+      <td><code>curl -X POST "{{.BaseURL}}/renew"</code><br>
+          憑證中心 --force 更新所有憑證，需搭配 3. 重新下載憑證</td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -47,4 +47,4 @@ else
   fi
 fi
 
-exec certcenter
+exec /app/certcenter
