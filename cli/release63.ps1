@@ -35,13 +35,13 @@ function devCarcareNginx {
 function releaseCarcareNginx {
     backToDefault
     cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\nginx
-    docker build -t 192.168.100.63:5000/carcare-nginx .
-    docker push 192.168.100.63:5000/carcare-nginx
-    
+    docker build -t 192.168.100.63:5000/carcare-nginx:1.0.2 .
+    docker push 192.168.100.63:5000/carcare-nginx:1.0.2
+
     createAndUse41
     cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\DevDocker\DevNginx\carcare
     docker-compose up -d
-    cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\DevDocker\DevNginx\carcare-its
+    cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\DevDocker\DevNginx\carcare-sit
     docker-compose up -d
 
     createAndUse101
