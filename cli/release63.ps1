@@ -32,7 +32,7 @@ function devCarcareNginx {
 }
 
 #手動更新證書 手動更新憑證 手動憑證更新 Carcare 手動更新Carcare證書 手動更新Carcare憑證
-function releaseCarcareNginx {
+function releaseNginxImageDemo {
     backToDefault
     cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\nginx
     docker build -t 192.168.100.63:5000/carcare-nginx:1.0.2 .
@@ -40,17 +40,11 @@ function releaseCarcareNginx {
 
     createAndUse41
     cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\DevDocker\DevNginx\carcare
-    docker-compose up -d
+    docker compose up -d --pull always
     cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\DevDocker\DevNginx\carcare-sit
-    docker-compose up -d
+    docker compose up -d --pull always
 
     createAndUse101
     cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\DevDocker\DevNginx\prod\carcare
-    docker-compose up -d
-}
-
-function PushAndCompose101 {
-    cd D:\Users\AmandaChou\git\itsower\LineCRM.CarCare.Devops\VMSolution\nginx
-    docker build -t 192.168.100.63:5000/carcare-nginx:latest .
-    docker push 192.168.100.63:5000/carcare-nginx:latest
+    docker compose up -d --pull always
 }
